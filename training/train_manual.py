@@ -529,3 +529,4 @@ if __name__ == '__main__':
     
     print(f"\nFinal similarity matrix shape: {sim_matrix.shape}")
     print(f"Memory usage: {sim_matrix.nbytes / 1024 / 1024:.2f} MB")
+ #make changes here
