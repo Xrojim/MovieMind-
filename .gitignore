@@ -59,6 +59,7 @@ htmlcov/
 *.csv
 *.pkl
 *.json
+!models/title_to_idx.json
 *.npy
 *.parquet
 *.npz
