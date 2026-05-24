@@ -495,11 +495,13 @@ class ManualMovieRecommenderTrainer:
             pickle.dump(self.tfidf_vectorizer, f)
         
         # Save SVD model
+        
         if self.svd_model:
             with open(self.output_dir / 'svd_model.pkl', 'wb') as f:
                 pickle.dump(self.svd_model, f)
         
         # Save config
+
         config = {
             'n_movies': len(df),
             'use_svd': self.use_svd,
@@ -526,6 +528,7 @@ if __name__ == '__main__':
         quality_threshold='medium',
         max_movies=100000
     )
+    
     
     print(f"\nFinal similarity matrix shape: {sim_matrix.shape}")
     print(f"Memory usage: {sim_matrix.nbytes / 1024 / 1024:.2f} MB")
