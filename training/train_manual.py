@@ -529,6 +529,5 @@ if __name__ == '__main__':
         max_movies=100000
     )
     
-    
     print(f"\nFinal similarity matrix shape: {sim_matrix.shape}")
     print(f"Memory usage: {sim_matrix.nbytes / 1024 / 1024:.2f} MB")
