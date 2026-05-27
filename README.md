@@ -43,5 +43,3 @@ The Movie Recommendation System provides intelligent movie suggestions using **c
 - 📡 **REST API** - JSON endpoints for integration
 - 🔒 **Secure** - Production-ready security settings
 - 📝 **Logging** - Comprehensive error tracking
-
-A
