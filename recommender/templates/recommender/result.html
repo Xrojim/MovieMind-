@@ -1,0 +1,945 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Movie recommendations for {{ input_movie_name }}">
+    <title>Recommendations for {{ input_movie_name }} | Movie Recommendation System</title>
+    
+    <link rel="shortcut icon" href="{% static 'logo.ico' %}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.cdnfonts.com/css/d-din" rel="stylesheet">
+    
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('moviemind-theme');
+                if (savedTheme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --space-black: #000000;
+            --spectral-white: #f0f0fa;
+            --ghost-surface: rgba(240, 240, 250, 0.1);
+            --ghost-border: rgba(240, 240, 250, 0.35);
+            --overlay-dark: rgba(0, 0, 0, 0.5);
+            --text-secondary: rgba(240, 240, 250, 0.78);
+            --transition: all 0.2s ease;
+            /* Navbar colors */
+            --nav-bg: rgba(20, 20, 20, 0.75);
+            --nav-active-bg: rgba(240, 240, 250, 0.15);
+            /* Light mode support */
+            --bg-primary: #000000;
+            --text-primary: #f0f0fa;
+            --bg-card: #050505;
+            --border-color: rgba(240, 240, 250, 0.35);
+            --bg-card-hover: rgba(240, 240, 250, 0.1);
+        }
+        [data-theme="light"] {
+            --space-black: #f4f3ef;
+            --spectral-white: #111111;
+            --ghost-surface: #ffffff;
+            --ghost-border: #d0cfc8;
+            --overlay-dark: rgba(17, 17, 17, 0.08);
+            --text-secondary: rgba(17, 17, 17, 0.75);
+            --nav-bg: #ffffff;
+            --nav-active-bg: rgba(17, 17, 17, 0.1);
+            /* Light mode support */
+            --bg-primary: #f4f3ef;
+            --text-primary: #111111;
+            --bg-card: #ffffff;
+            --border-color: #d0cfc8;
+            --bg-card-hover: rgba(17, 17, 17, 0.05);
+        }
+
+        body {
+            font-family: 'D-DIN', Arial, Verdana, sans-serif;
+            background: var(--space-black);
+            color: var(--spectral-white);
+            min-height: 100vh;
+            line-height: 1.5;
+            text-transform: uppercase;
+            letter-spacing: 0.96px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* Animated background */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 1;
+        }
+
+        .background-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--bg-primary);
+        }
+
+        .header {
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--ghost-border);
+            background: rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            transition: backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, background 0.2s ease;
+        }
+        .header.is-scrolled {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .header-content,
+        .header-row {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 1rem;
+            width: 100%;
+        }
+        .nav-left {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        .brand-dot { display: none; }
+        .nav-right {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-left: auto;
+        }
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.42rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid rgba(99, 102, 241, 0.55);
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--spectral-white);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.55), 0 0 16px rgba(99, 102, 241, 0.3);
+            text-shadow: 0 0 6px rgba(240, 240, 250, 0.45);
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            border: none;
+            transition: all 0.2s ease;
+            position: relative;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+            background: transparent;
+        }
+        .nav-link:hover {
+            color: var(--spectral-white);
+            background: var(--ghost-surface);
+        }
+        .nav-link.active {
+            color: var(--spectral-white);
+            background: var(--nav-active-bg);
+        }
+        .nav-link.active::after {
+            display: none;
+        }
+        .theme-toggle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--ghost-border);
+            background: var(--ghost-surface);
+            color: var(--spectral-white);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+            line-height: 1;
+            font-family: inherit;
+        }
+
+        .brand-link {
+            color: var(--spectral-white);
+            text-decoration: none;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            font-size: 1.15rem;
+            white-space: nowrap;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--ghost-surface);
+            color: var(--spectral-white);
+            text-decoration: none;
+            border-radius: 32px;
+            font-weight: 700;
+            transition: var(--transition);
+            border: 1px solid var(--ghost-border);
+            cursor: pointer;
+            letter-spacing: 1.17px;
+        }
+        .logout-btn {
+            background: var(--ghost-surface);
+            border: 1px solid var(--ghost-border);
+            color: var(--spectral-white);
+            font-size: 0.75rem;
+            padding: 0.5rem 0.82rem;
+            border-radius: 32px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 1.17px;
+            text-transform: uppercase;
+            font-family: inherit;
+        }
+        .logout-btn:hover {
+            background: rgba(240, 240, 250, 0.2);
+            border-color: rgba(240, 240, 250, 0.55);
+        }
+        .back-button:hover {
+            background: rgba(240, 240, 250, 0.2);
+            border-color: rgba(240, 240, 250, 0.55);
+        }
+
+        /* Results Header */
+        .results-header {
+            text-align: left;
+            min-height: auto;
+            padding: 3rem 8vw 2rem;
+            background: var(--bg-primary);
+        }
+
+        .results-title {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .searched-movie {
+            color: var(--spectral-white);
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--ghost-surface);
+            border-radius: 32px;
+            border: 1px solid var(--ghost-border);
+        }
+
+        .results-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            text-transform: none;
+            letter-spacing: 0.02em;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 5rem 1rem 3rem;
+        }
+        .sort-controls {
+            margin-bottom: 1.25rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .sort-controls form {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--ghost-surface);
+            border: 1px solid var(--ghost-border);
+            border-radius: 32px;
+            padding: 0.55rem 0.75rem;
+        }
+        .sort-controls label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .sort-select {
+            background: rgba(0, 0, 0, 0.35);
+            color: var(--spectral-white);
+            border: 1px solid var(--ghost-border);
+            border-radius: 18px;
+            padding: 0.4rem 0.55rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        /* Movie Grid */
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.2rem;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        /* Movie Card */
+        .movie-card {
+            background: var(--ghost-surface);
+            border-radius: 24px;
+            padding: 1.4rem;
+            border: 1px solid var(--ghost-border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .movie-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--spectral-white);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: var(--transition);
+        }
+
+        .movie-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(240, 240, 250, 0.55);
+        }
+
+        .movie-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .movie-rank {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 40px;
+            height: 40px;
+            background: var(--ghost-surface);
+            border: 1px solid var(--ghost-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--spectral-white);
+        }
+
+        .movie-icon {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: block;
+            opacity: 0.7;
+        }
+
+        .movie-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--spectral-white);
+            line-height: 1.4;
+            padding-right: 50px;
+        }
+        .movie-card-link {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+        }
+        .movie-card-link:hover .movie-title {
+            color: var(--accent-primary, #6366f1);
+        }
+        .movie-poster-wrap {
+            width: 100%;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--ghost-border);
+            aspect-ratio: 2 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .movie-poster {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .poster-fallback {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .movie-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .movie-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: none;
+            letter-spacing: 0.02em;
+        }
+
+        .detail-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        .movie-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .why-box {
+            margin: 1rem 0 1.25rem;
+            padding: 0.9rem;
+            border: 1px solid var(--ghost-border);
+            border-radius: 18px;
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .why-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+            color: var(--spectral-white);
+        }
+
+        .why-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .why-badge {
+            display: inline-block;
+            padding: 0.35rem 0.6rem;
+            border-radius: 999px;
+            background: var(--ghost-surface);
+            color: var(--spectral-white);
+            font-size: 0.8rem;
+            border: 1px solid var(--ghost-border);
+        }
+        .why-details {
+            margin-top: 0.75rem;
+            border-top: 1px dashed var(--ghost-border);
+            padding-top: 0.65rem;
+        }
+        .why-toggle {
+            background: transparent;
+            border: 1px solid var(--ghost-border);
+            color: var(--spectral-white);
+            border-radius: 999px;
+            padding: 0.3rem 0.55rem;
+            font-size: 0.78rem;
+            cursor: pointer;
+            margin-top: 0.45rem;
+        }
+        .why-factor {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 0.45rem;
+            text-transform: none;
+            letter-spacing: 0.02em;
+        }
+        .confidence-pill {
+            margin-top: 0.65rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            padding: 0.28rem 0.65rem;
+            font-size: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            color: var(--spectral-white);
+        }
+        .factor-meter {
+            margin-top: 0.35rem;
+            width: 100%;
+            height: 7px;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .factor-meter-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: var(--spectral-white);
+        }
+
+        .movie-link {
+            flex: 1;
+            min-width: 120px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 32px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            border: 1px solid;
+            text-transform: uppercase;
+            letter-spacing: 1.17px;
+        }
+
+        .link-primary {
+            background: var(--ghost-surface);
+            border-color: var(--ghost-border);
+            color: var(--spectral-white);
+        }
+
+        .link-primary:hover {
+            background: rgba(240, 240, 250, 0.2);
+            border-color: rgba(240, 240, 250, 0.55);
+            transform: translateY(-1px);
+        }
+
+        .link-secondary {
+            background: transparent;
+            border-color: var(--ghost-border);
+            color: var(--text-secondary);
+        }
+
+        .link-secondary:hover {
+            border-color: rgba(240, 240, 250, 0.55);
+            color: var(--spectral-white);
+            transform: translateY(-1px);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-secondary);
+            font-size: 0.63rem;
+            letter-spacing: 1px;
+            border-top: 1px solid var(--ghost-border);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Scroll-based animation for cards */
+        .movie-card {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        .movie-card.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                gap: 0.65rem;
+                padding: 0.6rem 1rem;
+            }
+            .header-content {
+                width: auto;
+            }
+            .nav-right {
+                width: auto;
+            }
+            .brand-link {
+                font-size: 0.75rem;
+            }
+            .nav-link {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.75rem;
+            }
+
+            .results-header {
+                padding: 2rem 1rem;
+            }
+
+            .movies-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .movie-card {
+                padding: 1.5rem;
+            }
+
+            .movie-actions {
+                flex-direction: column;
+            }
+
+            .movie-link {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                gap: 0.4rem;
+                padding: 0.5rem 0.8rem;
+            }
+            .brand-link {
+                font-size: 0.7rem;
+            }
+            .nav-link {
+                padding: 0.35rem 0.5rem;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* No results state */
+        .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .no-results-icon { display: none; }
+        .movie-card, .movie-link, .sort-controls form, .sort-select, .header {
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="nav-left">
+            <span class="brand-dot" aria-hidden="true"></span>
+            <a href="{% url 'recommender:main' %}" class="brand-link">MovieMind</a>
+            </div>
+            <div class="nav-right">
+                {% if user.is_authenticated %}
+                <span class="user-badge">{{ user.username }}</span>
+                <a class="nav-link{% if request.path == '/analytics/' %} active{% endif %}" href="{% url 'recommender:analytics' %}">📊 Analytics</a>
+                <a class="nav-link{% if request.path == '/watchlist/' %} active{% endif %}" href="{% url 'recommender:watchlist' %}">Watchlist</a>
+                <a class="nav-link{% if request.path == '/history/' %} active{% endif %}" href="{% url 'recommender:history' %}">History</a>
+                <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀</button>
+                    <a class="nav-link" href="{% url 'recommender:logout' %}">Logout</a>
+                {% else %}
+                    <a class="nav-link{% if request.path == '/accounts/login/' %} active{% endif %}" href="{% url 'login' %}">Login</a>
+                    <a class="nav-link{% if request.path == '/signup/' %} active{% endif %}" href="{% url 'recommender:signup' %}">Sign up</a>
+                    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀</button>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Back Button -->
+    <div style="padding: 5rem 1rem 0; max-width: 1200px; margin: 0 auto;">
+        <a href="/" class="back-button">
+            ← New Search
+        </a>
+    </div>
+
+    <!-- Results Header -->
+    <div class="results-header">
+        <h1 class="results-title">
+            Movies like <span class="searched-movie">{{ input_movie_name }}</span>
+        </h1>
+        {% if source_movie %}
+        <p class="results-subtitle">
+            {{ source_movie.production }} | {{ source_movie.rating }} | {{ source_movie.genres }}
+        </p>
+        {% endif %}
+        <p class="results-subtitle">
+            We found {{ total_recommendations|default:"15" }} amazing recommendations for you
+        </p>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container">
+        {% if recommended_movies %}
+        <div class="sort-controls">
+            <form method="get">
+                <label for="sort-select">Sort by</label>
+                <select class="sort-select" id="sort-select" name="sort" onchange="this.form.submit()">
+                    <option value="similarity" {% if selected_sort == "similarity" %}selected{% endif %}>Similarity</option>
+                    <option value="rating" {% if selected_sort == "rating" %}selected{% endif %}>Rating</option>
+                    <option value="popularity" {% if selected_sort == "popularity" %}selected{% endif %}>Popularity</option>
+                    <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Newest</option>
+                </select>
+            </form>
+        </div>
+        <div class="movies-grid">
+            {% for movie in recommended_movies %}
+            <article class="movie-card">
+                <div class="movie-rank">{{ forloop.counter }}</div>
+                <span class="movie-icon">🎬</span>
+                <a href="{% url 'recommender:movie_detail' movie.movie_id %}" class="movie-card-link">
+                    <div class="movie-poster-wrap">
+                        {% if movie.poster_url %}
+                        <img class="movie-poster" src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" loading="lazy">
+                        {% else %}
+                        <div class="poster-fallback">Poster unavailable</div>
+                        {% endif %}
+                    </div>
+                    <h2 class="movie-title">{{ movie.title }}</h2>
+                </a>
+                
+                <div class="movie-details">
+                    <div class="movie-detail">
+                        <span class="detail-icon">⭐</span>
+                        <span>{{ movie.rating }} ({{ movie.votes }} votes)</span>
+                    </div>
+                    <div class="movie-detail">
+                        <span class="detail-icon">📅</span>
+                        <span>{{ movie.release_date }}</span>
+                    </div>
+                    <div class="movie-detail">
+                        <span class="detail-icon">🎭</span>
+                        <span>{{ movie.genres }}</span>
+                    </div>
+                    <div class="movie-detail">
+                        <span class="detail-icon">🏢</span>
+                        <span>{{ movie.production }}</span>
+                    </div>
+                </div>
+                <div class="why-box">
+                    <div class="why-title">Why recommended</div>
+                    <div class="why-badges">
+                    {% if movie.why_recommended %}
+                        {% for reason in movie.why_recommended %}
+                        <span class="why-badge">{{ reason }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="why-badge">Similarity score: {{ movie.similarity_score }}</span>
+                    {% endif %}
+                    </div>
+                    {% if movie.explanation and movie.explanation.factors %}
+                    <button type="button" class="why-toggle" data-target="why-{{ forloop.counter }}">Show details</button>
+                    <div class="confidence-pill">
+                        Confidence: {{ movie.explanation.confidence }} ({{ movie.explanation.confidence_percent }}%)
+                    </div>
+                    <div class="why-details" id="why-{{ forloop.counter }}" style="display:none;">
+                        {% for factor in movie.explanation.factors %}
+                        <div class="why-factor">
+                            <strong>{{ factor.name }}</strong>: {{ factor.score }}{% if factor.details %} - {{ factor.details }}{% endif %}
+                            <div class="factor-meter">
+                                <div class="factor-meter-fill" style="width: {% widthratio factor.score 1 100 %}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="movie-actions">
+                    <a href="{{ movie.google_link }}" target="_blank" rel="noopener noreferrer" class="movie-link link-primary">
+                        🔍 Google
+                    </a>
+                    {% if movie.imdb_link %}
+                    <a href="{{ movie.imdb_link }}" target="_blank" rel="noopener noreferrer" class="movie-link link-secondary">
+                        ⭐ IMDb
+                    </a>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                        {% if movie.movie_id in watchlist_ids %}
+                        <a href="{% url 'recommender:watchlist' %}" class="movie-link link-secondary">In Watchlist</a>
+                        {% else %}
+                        <form method="post" action="{% url 'recommender:add_to_watchlist' %}" style="display:inline; flex:1;">
+                            {% csrf_token %}
+                            <input type="hidden" name="movie_id" value="{{ movie.movie_id }}">
+                            <input type="hidden" name="movie_title" value="{{ movie.title }}">
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="movie-link link-secondary" style="width:100%; cursor:pointer;">+ Watchlist</button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-results">
+            <div class="no-results-icon">😕</div>
+            <h2>No recommendations found</h2>
+            <p>We couldn't find any recommendations for this movie. Please try another one.</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>MovieMind © Rojim</p>
+    </footer>
+    <script>
+        // Set dynamic year in footer
+        document.addEventListener("DOMContentLoaded", function() {
+            var currentYear = new Date().getFullYear();
+            document.getElementById("currentYear").textContent = currentYear;
+        });
+    </script>
+
+    <script>
+        (function() {
+            const header = document.querySelector('.header');
+            if (!header) return;
+            const onScroll = () => {
+                header.classList.toggle('is-scrolled', window.scrollY > 8);
+            };
+            onScroll();
+            window.addEventListener('scroll', onScroll, { passive: true });
+        })();
+    </script>
+
+    <script>
+        // Smooth scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Scroll-based animation for cards
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all movie cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.movie-card');
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+
+        // Add interactive feedback
+        document.querySelectorAll('.movie-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'A') {
+                    this.style.transform = 'scale(0.98) translateY(0)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 100);
+                }
+            });
+        });
+
+        document.querySelectorAll('.why-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = document.getElementById(this.dataset.target);
+                if (!target) return;
+                const isHidden = target.style.display === 'none';
+                target.style.display = isHidden ? 'block' : 'none';
+                this.textContent = isHidden ? 'Hide details' : 'Show details';
+            });
+        });
+        (function() {
+            var toggle = document.getElementById('themeToggle');
+            if (!toggle) return;
+            var root = document.documentElement;
+            var syncIcon = function() {
+                var isLight = root.getAttribute('data-theme') === 'light';
+                toggle.textContent = isLight ? '🌙' : '☀';
+            };
+            syncIcon();
+            toggle.addEventListener('click', function() {
+                var isLight = root.getAttribute('data-theme') === 'light';
+                if (isLight) {
+                    root.removeAttribute('data-theme');
+                    localStorage.setItem('moviemind-theme', 'dark');
+                } else {
+                    root.setAttribute('data-theme', 'light');
+                    localStorage.setItem('moviemind-theme', 'light');
+                }
+                syncIcon();
+            });
+        })();
+    </script>
+</body>
+</html>

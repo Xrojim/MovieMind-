@@ -1,0 +1,1014 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Discover your next favorite movie with our AI-powered recommendation system. Get personalized movie suggestions based on your preferences.">
+    <meta name="keywords" content="movie recommendations, film suggestions, movie finder, AI recommendations">
+    <meta name="author" content="Movie Recommendation System">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Movie Recommendation System">
+    <meta property="og:description" content="Discover your next favorite movie with our AI-powered recommendation system">
+    <meta property="og:type" content="website">
+    
+    <link rel="shortcut icon" href="{% static 'logo.ico' %}">
+    <title>Movie Recommendation System - Find Your Next Favorite Film</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.cdnfonts.com/css/d-din" rel="stylesheet">
+    
+    <!-- jQuery UI for autocomplete -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('moviemind-theme');
+                if (savedTheme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --space-black: #000000;
+            --spectral-white: #f0f0fa;
+            --ghost-surface: rgba(240, 240, 250, 0.1);
+            --ghost-border: rgba(240, 240, 250, 0.35);
+            --overlay-dark: rgba(0, 0, 0, 0.5);
+            --text-secondary: rgba(240, 240, 250, 0.8);
+            --accent-primary: #6366f1;
+            /* Light mode support */
+            --bg-primary: #000000;
+            --text-primary: #f0f0fa;
+            --bg-card: #050505;
+            --border-color: rgba(240, 240, 250, 0.35);
+            --bg-card-hover: rgba(240, 240, 250, 0.1);
+        }
+        [data-theme="light"] {
+            --space-black: #f4f3ef;
+            --spectral-white: #111111;
+            --ghost-surface: #ffffff;
+            --ghost-border: #d0cfc8;
+            --overlay-dark: rgba(17, 17, 17, 0.08);
+            --text-secondary: rgba(17, 17, 17, 0.75);
+            --accent-primary: #6366f1;
+            --nav-active-bg: rgba(17, 17, 17, 0.1);
+            /* Light mode support */
+            --bg-primary: #f4f3ef;
+            --text-primary: #111111;
+            --bg-card: #ffffff;
+            --border-color: #d0cfc8;
+            --bg-card-hover: rgba(17, 17, 17, 0.05);
+        }
+        body {
+            font-family: 'D-DIN', Arial, Verdana, sans-serif;
+            background: var(--space-black);
+            color: var(--spectral-white);
+            min-height: 100vh;
+            text-transform: uppercase;
+            letter-spacing: 0.96px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .background-animation { display: none; }
+        .header {
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--ghost-border);
+            background: rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            transition: backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, background 0.2s ease;
+        }
+        .header.is-scrolled {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .header-row {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 1rem;
+            width: 100%;
+        }
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            flex-shrink: 0;
+        }
+        .brand-dot { display: none; }
+        .brand-link {
+            color: var(--spectral-white);
+            text-decoration: none;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            font-size: 1.15rem;
+            white-space: nowrap;
+        }
+        .nav-right {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-left: auto;
+        }
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.42rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid rgba(99, 102, 241, 0.55);
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--spectral-white);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.55), 0 0 16px rgba(99, 102, 241, 0.3);
+            text-shadow: 0 0 6px rgba(240, 240, 250, 0.45);
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            border: none;
+            position: relative;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+        .nav-link:hover {
+            color: var(--spectral-white);
+            background: var(--ghost-surface);
+        }
+        .nav-link.active {
+            color: var(--spectral-white);
+            background: var(--nav-active-bg);
+        }
+        .nav-link.active::after {
+            display: none;
+        }
+        .theme-toggle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--ghost-border);
+            background: var(--ghost-surface);
+            color: var(--spectral-white);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+            line-height: 1;
+            font-family: inherit;
+        }
+        .logout-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            font-family: inherit;
+            font-weight: 400;
+            transition: all 0.2s ease;
+        }
+        .logout-btn:hover {
+            background: var(--ghost-surface);
+            color: var(--spectral-white);
+        }
+        .hero-head {
+            min-height: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            text-align: center;
+            align-items: center;
+        }
+        h1 {
+            font-size: clamp(32px, 4vw, 52px);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            max-width: 800px;
+            margin-bottom: 1rem;
+            color: var(--spectral-white);
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 600px;
+            line-height: 1.7;
+            text-transform: none;
+            letter-spacing: 0.02em;
+            margin-top: 12px;
+        }
+        .stats {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--ghost-surface);
+            border: 1px solid var(--ghost-border);
+            padding: 0.7rem 1.25rem;
+            border-radius: 50px;
+            margin-top: 1.5rem;
+            margin-bottom: 24px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+        }
+        .stats-dot { 
+            width: 8px; 
+            height: 8px; 
+            border-radius: 50%; 
+            background: var(--accent-primary);
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            width: 100%;
+        }
+        .search-card {
+            min-height: auto;
+            padding: 0;
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.02) 0%, transparent 100%);
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+        }
+        .search-label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0 0 16px;
+            color: var(--text-secondary);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .search-form-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 32px;
+        }
+        .search-container {
+            flex: 1;
+            position: relative;
+            margin-bottom: 0;
+        }
+        .search-input {
+            width: 100%;
+            height: 40px;
+            box-sizing: border-box;
+            padding: 0 1.5rem;
+            font-size: 1rem;
+            border: 1px solid var(--ghost-border);
+            border-radius: 16px;
+            background: var(--ghost-surface);
+            color: var(--spectral-white);
+            font-family: inherit;
+            text-transform: none;
+            letter-spacing: 0.02em;
+            transition: all 0.3s ease;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .search-input::placeholder {
+            color: rgba(240, 240, 250, 0.4);
+            opacity: 1;
+        }
+        .search-button {
+            flex: 0 0 auto;
+            height: 40px;
+            box-sizing: border-box;
+            padding: 0 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--spectral-white);
+            background: var(--ghost-surface);
+            border: 1px solid var(--ghost-border);
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .search-button:hover {
+            background: var(--ghost-border);
+        }
+        .search-button:active {
+            transform: translateY(0);
+        }
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            margin-top: 1.5rem;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+            max-width: 760px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .alert-error {
+            color: var(--spectral-white);
+            font-size: 0.9rem;
+        }
+        .alert-icon { display: none; }
+        .ui-autocomplete {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+            font-family: inherit;
+        }
+        .ui-menu-item { padding: 0; }
+        .ui-menu-item-wrapper { padding: 0.75rem 1.25rem; color: var(--text-primary); cursor: pointer; border: none; text-transform: uppercase; }
+        .ui-menu-item-wrapper:hover,
+        .ui-state-active {
+            background: var(--bg-card-hover) !important;
+            border: none !important;
+            color: var(--text-primary) !important;
+            margin: 0 !important;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 3rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .recent-section {
+            margin-top: 32px;
+            background: var(--ghost-surface);
+            border-radius: 18px;
+            border: 1px solid var(--ghost-border);
+            padding: 24px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .recent-section h3 {
+            margin: 0 0 12px;
+        }
+        .recent-list {
+            margin: 0;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 4px;
+            padding-right: 24px;
+            scrollbar-width: thin;
+        }
+        .recent-item {
+            flex: 0 0 180px;
+            min-width: 180px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--ghost-border);
+            border-radius: 14px;
+            text-decoration: none;
+            color: var(--spectral-white);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        .recent-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(240, 240, 250, 0.55);
+        }
+        .recent-poster-wrap {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            background: rgba(0, 0, 0, 0.35);
+            border-bottom: 1px solid var(--ghost-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .recent-poster-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .recent-poster-fallback {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: none;
+            letter-spacing: 0.02em;
+            text-align: center;
+            padding: 8px;
+        }
+        .recent-item-body {
+            padding: 10px;
+        }
+        .recent-title {
+            margin: 0 0 6px;
+            font-size: 0.8rem;
+            line-height: 1.3;
+            text-transform: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .recent-meta {
+            margin: 0;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            text-transform: none;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .feature-card {
+            background: var(--ghost-surface);
+            padding: 20px 24px;
+            border-radius: 18px;
+            border: 1px solid var(--ghost-border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--ghost-border);
+        }
+        .feature-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--ghost-surface);
+            border: 1px solid var(--ghost-border);
+            font-size: 1.5rem;
+        }
+        .feature-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.08em;
+            color: var(--spectral-white);
+        }
+        .feature-description { 
+            font-size: 0.8rem; 
+            color: var(--text-secondary); 
+            line-height: 1.7; 
+            text-transform: none;
+            letter-spacing: 0.02em;
+        }
+        .personalized-card {
+            margin-top: 32px;
+            padding: 24px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 18px;
+            border: 1px solid var(--ghost-border);
+            background: rgba(255, 255, 255, 0.02);
+            max-width: 760px;
+            margin-left: auto;
+            margin-right: auto;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .hero-shell {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+        .personalized-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 16px;
+        }
+        .personalized-button {
+            flex: 1 1 250px;
+            padding: 0.9rem 1.5rem;
+            border: 1px solid var(--ghost-border);
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--spectral-white);
+            background: var(--ghost-surface);
+            border: 1px solid var(--ghost-border);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        .personalized-button:hover {
+            background: var(--ghost-border);
+        }
+        .feature-card, .personalized-card, .search-input, .search-button, .header {
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        .footer {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            border-top: 1px solid var(--ghost-border);
+        }
+        .search-button.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .search-button.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid var(--spectral-white);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content { text-align: center; padding: 2rem; max-width: 440px; }
+        .loading-icon { display: none; }
+
+        .loading-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--spectral-white);
+            letter-spacing: 0.96px;
+        }
+        .loading-subtitle {
+            font-size: 0.81rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            letter-spacing: 1.17px;
+        }
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: var(--ghost-surface);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            border: 1px solid var(--ghost-border);
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--spectral-white);
+            border-radius: 999px;
+            transition: width 0.3s ease-out;
+        }
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--ghost-surface);
+            border-radius: 50%;
+            border-top-color: var(--spectral-white);
+            animation: spin 0.8s linear infinite;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        .main-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .features {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 0.65rem;
+                padding: 0.6rem 1rem;
+                top: 0.5rem;
+                border-radius: 999px;
+                width: calc(100% - 2rem);
+            }
+            .header-row {
+                width: auto;
+            }
+            .brand-link {
+                font-size: 0.75rem;
+            }
+            .nav-link {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                gap: 0.4rem;
+                padding: 0.5rem 0.8rem;
+            }
+            .brand-link {
+                font-size: 0.7rem;
+            }
+            .nav-link {
+                padding: 0.35rem 0.5rem;
+                font-size: 0.7rem;
+            }
+        }
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 0.65rem;
+                padding: 0.6rem 1rem;
+                top: 0.5rem;
+                border-radius: 999px;
+                width: calc(100% - 2rem);
+            }
+            .header-row {
+                width: auto;
+            }
+            .brand-link {
+                font-size: 0.75rem;
+            }
+            .nav-link {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.75rem;
+            }
+        }
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .subtitle {
+                font-size: 0.875rem;
+            }
+            .search-card {
+                padding: 1rem 1rem 1.5rem;
+            }
+            .personalized-card {
+                padding: 0.75rem;
+            }
+            .feature-card {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-content">
+            <h2 class="loading-title">Loading Movie Database</h2>
+            <p class="loading-subtitle">Please wait while we prepare your recommendations</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+            <p class="progress-text">
+                <span id="progressText">0%</span>
+                <span class="loading-spinner"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="background-animation"></div>
+
+    <div class="main-content visible" id="mainContent">
+    <header class="header">
+        <div class="header-row">
+            <div class="nav-left">
+                <span class="brand-dot" aria-hidden="true"></span>
+                <a class="brand-link" href="{% url 'recommender:main' %}">MovieMind</a>
+            </div>
+            <div class="nav-right">
+            {% if user.is_authenticated %}
+                <span class="user-badge">{{ user.username }}</span>
+                <a class="nav-link{% if request.path == '/analytics/' %} active{% endif %}" href="{% url 'recommender:analytics' %}">📊 Analytics</a>
+                <a class="nav-link{% if request.path == '/watchlist/' %} active{% endif %}" href="{% url 'recommender:watchlist' %}">Watchlist</a>
+                <a class="nav-link{% if request.path == '/history/' %} active{% endif %}" href="{% url 'recommender:history' %}">History</a>
+                <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀</button>
+                <a class="nav-link" href="{% url 'recommender:logout' %}">Logout</a>
+            {% else %}
+                <a class="nav-link{% if request.path == '/accounts/login/' %} active{% endif %}" href="{% url 'login' %}">Login</a>
+                <a class="nav-link{% if request.path == '/signup/' %} active{% endif %}" href="{% url 'recommender:signup' %}">Sign up</a>
+                <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀</button>
+            {% endif %}
+            </div>
+        </div>
+        
+    </header>
+
+    <main class="container">
+        <section class="hero-shell">
+        <div class="hero-head">
+        
+        <h1>MovieMind: A Movie Recommendation System</h1>
+        <p class="subtitle">Discover your next favorite movie powered by AI</p>
+        <div class="stats">
+            <span class="stats-dot"></span>
+            <span>{{ total_movies|default:"2,000" }}+ movies available</span>
+        </div>
+        </div>
+        
+        <div class="search-card">
+            
+            <h2 class="search-label">Search For A Movie</h2>
+            
+            <form method="POST" id="searchForm" class="search-form-group">
+                {% csrf_token %}
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        id="movie_name" 
+                        name="movie_name"
+                        class="search-input"
+                        placeholder="Start typing a movie name..."
+                        value="{{ input_movie_name|default:'' }}"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+                
+                <button type="submit" class="search-button" id="searchButton">
+                    Get Recommendations
+                </button>
+            </form>
+
+            {% if error_message %}
+            <div class="alert alert-error">
+                <strong>{{ error_message }}</strong>
+            </div>
+            {% endif %}
+
+            <div class="personalized-card">
+                <strong>Personalized Recommendations</strong>
+                <p style="color: var(--text-secondary); margin-top: 0.2rem; font-size: 0.9rem;">
+                    Build recommendations using your saved activity.
+                </p>
+                {% if user.is_authenticated %}
+                    <div class="personalized-actions">
+                        <form method="post" action="{% url 'recommender:recommend_from_watchlist' %}" style="flex:1;">
+                            {% csrf_token %}
+                            <button class="personalized-button" type="submit">Recommend from Watchlist</button>
+                        </form>
+                        <form method="post" action="{% url 'recommender:recommend_from_history' %}" style="flex:1;">
+                            {% csrf_token %}
+                            <button class="personalized-button" type="submit">Recommend from Search History</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <p style="margin-top: 1rem; color: var(--text-secondary); text-transform: none;">
+                        Login to unlock watchlist-based and history-based recommendations.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        </section>
+
+       
+        {% if user.is_authenticated and recent_cards %}
+        <section class="recent-section">
+            <h3>Continue Browsing</h3>
+            <div class="recent-list">
+                {% for item in recent_cards %}
+                <a class="recent-item" href="{% url 'recommender:movie_detail' item.movie_id %}">
+                    <div class="recent-poster-wrap">
+                        {% if item.poster_url %}
+                        <img src="{{ item.poster_url }}" alt="{{ item.title }} poster" loading="lazy">
+                        {% else %}
+                        <div class="recent-poster-fallback">Poster unavailable</div>
+                        {% endif %}
+                    </div>
+                    <div class="recent-item-body">
+                        <p class="recent-title">{{ item.title }}</p>
+                        <p class="recent-meta">{{ item.rating }} | {{ item.release_date }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <footer class="footer">
+        <p>
+            MovieMind © Rojim
+        </p>
+    </footer>
+    </div>
+    <script>
+        // Model Loading Progress
+        let loadingInterval;
+        let checkCount = 0;
+        
+        function checkModelStatus() {
+            fetch('/api/model-status/')
+                .then(response => response.json())
+                .then(data => {
+                    const progressBar = document.getElementById('progressBar');
+                    const progressText = document.getElementById('progressText');
+                    const overlay = document.getElementById('loadingOverlay');
+                    const mainContent = document.getElementById('mainContent');
+                    
+                    checkCount++;
+                    
+                    if (data.loaded) {
+                        // Model is loaded
+                        progressBar.style.width = '100%';
+                        progressText.textContent = '100%';
+                        
+                        setTimeout(() => {
+                            overlay.classList.add('hidden');
+                            mainContent.classList.add('visible');
+                            clearInterval(loadingInterval);
+                        }, 500);
+                    } else if (data.status === 'error') {
+                        // Error loading model
+                        progressText.textContent = 'Error: ' + (data.error || 'Failed to load');
+                        clearInterval(loadingInterval);
+                    } else {
+                        // Update progress
+                        progressBar.style.width = data.progress + '%';
+                        progressText.textContent = data.progress + '%';
+                        
+                        // Adjust polling frequency based on progress
+                        if (data.progress > 0 && checkCount > 5) {
+                            // Once we see progress, check more frequently
+                            clearInterval(loadingInterval);
+                            loadingInterval = setInterval(checkModelStatus, 200);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking model status:', error);
+                    checkCount++;
+                    // Only give up after multiple failures
+                    if (checkCount > 20) {
+                        const overlay = document.getElementById('loadingOverlay');
+                        const mainContent = document.getElementById('mainContent');
+                        overlay.classList.add('hidden');
+                        mainContent.classList.add('visible');
+                        clearInterval(loadingInterval);
+                    }
+                });
+        }
+
+        // Start checking model status immediately
+        checkModelStatus();
+        loadingInterval = setInterval(checkModelStatus, 300);
+        
+        // Set dynamic year in footer
+        document.addEventListener('DOMContentLoaded', function() {
+            var currentYear = new Date().getFullYear();
+            document.getElementById("currentYear").textContent = currentYear;
+        });
+    </script>
+
+    <script>
+        (function() {
+            const header = document.querySelector('.header');
+            if (!header) return;
+            const onScroll = () => {
+                header.classList.toggle('is-scrolled', window.scrollY > 8);
+            };
+            onScroll();
+            window.addEventListener('scroll', onScroll, { passive: true });
+        })();
+    </script>
+
+    <script>
+        $(function() {
+            // Autocomplete configuration
+            var movieNames = [
+                {% for movie in all_movie_names %}
+                "{{ movie|escapejs }}",
+                {% endfor %}
+            ];
+
+            $("#movie_name").autocomplete({
+                source: movieNames,
+                minLength: 2,
+                delay: 300,
+                select: function(event, ui) {
+                    $(this).val(ui.item.value);
+                    return false;
+                }
+            });
+
+            // Form submission with loading state
+            $('#searchForm').on('submit', function() {
+                var button = $('#searchButton');
+                button.addClass('loading');
+                button.text('Searching...');
+            });
+
+            // Auto-focus on load
+            $('#movie_name').focus();
+        });
+    </script>
+    <script>
+        (function() {
+            var toggle = document.getElementById('themeToggle');
+            if (!toggle) return;
+            var root = document.documentElement;
+            var syncIcon = function() {
+                var isLight = root.getAttribute('data-theme') === 'light';
+                toggle.textContent = isLight ? '🌙' : '☀';
+            };
+            syncIcon();
+            toggle.addEventListener('click', function() {
+                var isLight = root.getAttribute('data-theme') === 'light';
+                if (isLight) {
+                    root.removeAttribute('data-theme');
+                    localStorage.setItem('moviemind-theme', 'dark');
+                } else {
+                    root.setAttribute('data-theme', 'light');
+                    localStorage.setItem('moviemind-theme', 'light');
+                }
+                syncIcon();
+            });
+        })();
+    </script>
+</body>
+</html>
