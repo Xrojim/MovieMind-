@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}{{ movie.title }} | Movie Detail{% endblock %}
+
+{% block page_css %}
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(24px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes skeletonShine {
+        0%   { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    @keyframes trailerReveal {
+        from { opacity: 0; transform: translateY(30px) scale(0.98); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .detail-page {
+        animation: fadeInUp 0.6s ease both;
+        padding: 40px 0;
+    }
+    .detail-layout {
+        display: grid;
+        grid-template-columns: 30% 70%;
+        gap: 32px;
+        align-items: start;
+    }
+    @media (max-width: 1024px) {
+        .detail-layout { grid-template-columns: 35% 65%; gap: 24px; }
+    }
+    @media (max-width: 768px) {
+        .detail-layout { grid-template-columns: 1fr; gap: 24px; }
+    }
+    .detail-left { min-width: 0; }
+    .poster-wrap {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        aspect-ratio: 2 / 3;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px var(--ghost-border);
+        transition: transform 0.45s ease, box-shadow 0.45s ease;
+    }
+    .poster-wrap:hover {
+        transform: scale(1.03);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 24px rgba(99,102,241,0.25), 0 0 0 1px var(--ghost-border);
+    }
+    .poster-wrap img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .meta-card {
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 16px;
+        background: rgba(240,240,250,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+    .meta-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        text-transform: none;
+        letter-spacing: 0.02em;
+        font-size: 0.92rem;
+    }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-label { color: var(--text-secondary); font-weight: 500; }
+    .meta-value { color: var(--text-primary); font-weight: 600; text-align: right; }
+    .detail-right { min-width: 0; }
+    .movie-title {
+        margin: 0 0 6px;
+        font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+    }
+    .movie-tagline {
+        margin: 0 0 24px;
+        color: var(--text-secondary);
+        font-size: 1.05rem;
+        text-transform: none;
+        letter-spacing: 0.02em;
+        line-height: 1.4;
+    }
+    .action-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        text-decoration: none;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--spectral-white);
+        border-radius: 14px;
+        padding: 0.72rem 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid var(--ghost-border);
+        background: var(--ghost-surface);
+    }
+    .btn-action:hover {
+        background: var(--ghost-border);
+        transform: translateY(-2px);
+    }
+    .btn-action.accent {
+        background: rgba(99, 102, 241, 0.18);
+        border-color: rgba(99, 102, 241, 0.55);
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
+    }
+    .btn-action.accent:hover {
+        background: rgba(99, 102, 241, 0.30);
+        box-shadow: 0 0 18px rgba(99, 102, 241, 0.55);
+    }
+    .trailer-section { margin-bottom: 24px; }
+    .trailer-container {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 18px;
+        overflow: hidden;
+        background: rgba(0,0,0,0.45);
+        border: 1px solid var(--ghost-border);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+        animation: trailerReveal 0.7s 0.15s ease both;
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .trailer-container:hover {
+        transform: scale(1.012);
+        box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.25);
+    }
+    .trailer-container iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .trailer-skeleton {
+        position: absolute;
+        inset: 0;
+        border-radius: 18px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+        background-size: 200% 100%;
+        animation: skeletonShine 1.6s infinite;
+        z-index: 2;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+    }
+    .trailer-skeleton.hidden { opacity: 0; }
+    .overview-card {
+        padding: 24px;
+        border-radius: 18px;
+        background: rgba(240,240,250,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        margin-bottom: 20px;
+    }
+    .overview-card h3 {
+        margin: 0 0 12px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-secondary);
+    }
+    .overview-card p {
+        margin: 0;
+        line-height: 1.75;
+        font-size: 1rem;
+        text-transform: none;
+        letter-spacing: 0.01em;
+        color: var(--text-primary);
+    }
+    .external-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .external-links a {
+        color: var(--text-primary);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid var(--ghost-border);
+        border-radius: 32px;
+        background: var(--ghost-surface);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        transition: all 0.25s ease;
+    }
+    .external-links a:hover {
+        background: var(--ghost-border);
+        transform: translateY(-1px);
+    }
+    .recent-box {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--ghost-border);
+    }
+    .recent-box h3 {
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-secondary);
+    }
+    .recent-box ul {
+        list-style: none;
+        padding: 0; margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .recent-box li a {
+        display: inline-block;
+        padding: 0.45rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid var(--ghost-border);
+        background: var(--ghost-surface);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.82rem;
+        text-transform: none;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
+    }
+    .recent-box li a:hover { background: var(--ghost-border); }
+    @media (max-width: 768px) {
+        .detail-page { padding: 24px 0; }
+        .poster-wrap { max-width: 260px; margin: 0 auto; }
+        .movie-title { font-size: 1.9rem; }
+        .action-bar { justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+    <div class="detail-layout">
+        <!-- LEFT COLUMN -->
+        <div class="detail-left">
+            {% if movie.poster_url %}
+            <div class="poster-wrap">
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" loading="lazy">
+            </div>
+            {% endif %}
+
+            <div class="meta-card">
+                <div class="meta-row">
+                    <span class="meta-label">Release</span>
+                    <span class="meta-value">{{ movie.release_date|default:"Unknown" }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Rating</span>
+                    <span class="meta-value">{{ movie.rating|default:"N/A" }}{% if movie.votes %} ({{ movie.votes }} votes){% endif %}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Genres</span>
+                    <span class="meta-value">{{ movie.genres|default:"N/A" }}</span>
+                </div>
+                {% if movie.runtime %}
+                <div class="meta-row">
+                    <span class="meta-label">Runtime</span>
+                    <span class="meta-value">{{ movie.runtime }}</span>
+                </div>
+                {% endif %}
+                <div class="meta-row">
+                    <span class="meta-label">Production</span>
+                    <span class="meta-value">{{ movie.production|default:"Unknown" }}</span>
+                </div>
+                {% if movie.language %}
+                <div class="meta-row">
+                    <span class="meta-label">Language</span>
+                    <span class="meta-value">{{ movie.language }}</span>
+                </div>
+                {% endif %}
+                {% if movie.budget %}
+                <div class="meta-row">
+                    <span class="meta-label">Budget</span>
+                    <span class="meta-value">{{ movie.budget }}</span>
+                </div>
+                {% endif %}
+                {% if movie.revenue %}
+                <div class="meta-row">
+                    <span class="meta-label">Revenue</span>
+                    <span class="meta-value">{{ movie.revenue }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="detail-right">
+            <h1 class="movie-title">{{ movie.title }}</h1>
+            {% if movie.tagline %}
+            <p class="movie-tagline">{{ movie.tagline }}</p>
+            {% endif %}
+
+            <div class="action-bar">
+                {% if user.is_authenticated %}
+                    {% if in_watchlist %}
+                    <form action="{% url 'recommender:remove_from_watchlist' watchlist_item_id %}" method="post" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" class="btn-action accent">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            Remove from Watchlist
+                        </button>
+                    </form>
+                    {% else %}
+                    <form action="{% url 'recommender:add_to_watchlist' %}" method="post" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="movie_id" value="{{ movie.movie_id }}">
+                        <input type="hidden" name="movie_title" value="{{ movie.title }}">
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" class="btn-action accent">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            Add to Watchlist
+                        </button>
+                    </form>
+                    {% endif %}
+                {% endif %}
+                <a href="{% url 'recommender:main' %}" class="btn-action">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Back
+                </a>
+            </div>
+
+            {% if movie.youtube_trailer_embed_url %}
+            <div class="trailer-section">
+                <div class="trailer-container" id="trailerBox">
+                    <div class="trailer-skeleton" id="trailerSkeleton"></div>
+                    <iframe
+                        id="trailerFrame"
+                        src="{{ movie.youtube_trailer_embed_url }}"
+                        title="{{ movie.title }} trailer"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="overview-card">
+                <h3>Overview</h3>
+                <p>{{ movie.overview|default:"No overview available." }}</p>
+            </div>
+
+            <div class="external-links">
+                {% if movie.google_link %}
+                <a href="{{ movie.google_link }}" target="_blank" rel="noopener noreferrer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    Google
+                </a>
+                {% endif %}
+                {% if movie.imdb_link %}
+                <a href="{{ movie.imdb_link }}" target="_blank" rel="noopener noreferrer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    IMDb
+                </a>
+                {% endif %}
+                {% if movie.youtube_trailer_link %}
+                <a href="{{ movie.youtube_trailer_link }}" target="_blank" rel="noopener noreferrer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+                    YouTube
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if user.is_authenticated and recent_items %}
+    <div class="recent-box">
+        <h3>Continue Browsing</h3>
+        <ul>
+            {% for item in recent_items %}
+            <li><a href="{% url 'recommender:movie_detail' item.movie_id %}">{{ item.movie_title }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+(function() {
+    var frame = document.getElementById('trailerFrame');
+    var skeleton = document.getElementById('trailerSkeleton');
+    if (frame && skeleton) {
+        frame.addEventListener('load', function() {
+            skeleton.classList.add('hidden');
+        });
+        setTimeout(function() { skeleton.classList.add('hidden'); }, 4000);
+    }
+})();
+</script>
+{% endblock %}
