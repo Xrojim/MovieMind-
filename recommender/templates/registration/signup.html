@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up | Movie Recommendation System{% endblock %}
+
+{% block page_css %}
+<style>
+    .auth-card {
+        width: 100%;
+        max-width: 460px;
+        margin: 6vh auto 0;
+        background: var(--ghost-surface);
+        padding: 2rem;
+        border-radius: 18px;
+        border: 1px solid var(--ghost-border);
+    }
+    .auth-card h1 { margin: 0 0 1rem; }
+    .auth-card p { color: var(--text-secondary); }
+    .auth-card p, .auth-links, .help-text, .error-box {
+        text-transform: none;
+        letter-spacing: 0.02em;
+    }
+    .auth-card input {
+        width: 100%;
+        padding: 0.75rem 0.9rem;
+        border-radius: 32px;
+        border: 1px solid var(--ghost-border);
+        background: var(--ghost-surface);
+        color: var(--text-primary);
+        margin-top: 0.2rem;
+        text-transform: uppercase;
+    }
+    .auth-card input:focus { outline: none; border-color: rgba(240, 240, 250, 0.6); }
+    .auth-card .btn-pill { width: 100%; margin-top: 0.75rem; }
+    .auth-links { margin-top: 1rem; font-size: 0.95rem; }
+    .auth-links a { color: var(--text-primary); text-decoration: none; }
+    .field-wrap { margin-bottom: 0.95rem; }
+    .field-wrap label {
+        display: block;
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.2rem;
+    }
+    .help-text {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin-top: 0.35rem;
+        line-height: 1.4;
+    }
+    .error-box {
+        border: 1px solid var(--ghost-border);
+        background: rgba(240, 240, 250, 0.15);
+        color: var(--text-primary);
+        border-radius: 18px;
+        padding: 0.7rem 0.85rem;
+        margin-bottom: 0.9rem;
+        font-size: 0.9rem;
+    }
+    .error-list {
+        margin: 0.35rem 0 0 1rem;
+        padding: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1 class="page-title">Create account</h1>
+    <form method="post">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="error-box">
+            <strong>Could not create account:</strong>
+            <ul class="error-list">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% for field in form %}
+        <div class="field-wrap">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+            <div class="help-text">{{ field.help_text|safe }}</div>
+            {% endif %}
+            {% if field.errors %}
+            <div class="error-box">
+                <ul class="error-list">
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button class="btn-pill" type="submit">Sign up</button>
+    </form>
+    <div class="auth-links">
+        <p><a href="{% url 'login' %}">Already have an account? Login</a></p>
+        <p><a href="{% url 'recommender:main' %}">Back to home</a></p>
+    </div>
+</div>
+{% endblock %}
