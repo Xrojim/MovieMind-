@@ -7,6 +7,7 @@ from . import views
 
 app_name = 'recommender'
 
+
 urlpatterns = [
     # Main views
     path('', views.main, name='main'),
