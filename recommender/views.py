@@ -43,7 +43,6 @@ _MODEL_LOAD_PROGRESS = 0
 _LOADING_THREAD = None
 _LOAD_ERROR = None
 
-
 def _update_recently_viewed(user, movie_id: int, movie_title: str):
     """Upsert recently viewed item and keep latest 10."""
     RecentlyViewed.objects.update_or_create(

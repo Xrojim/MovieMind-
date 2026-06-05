@@ -258,7 +258,7 @@ class FeatureFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Continue Browsing")
 
-    
+
     @patch("recommender.views._get_recommender")
     @patch("recommender.views._start_model_loading")
     def test_history_card_grid_shows_movie_details(self, _start, mock_get):
