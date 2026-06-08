@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - MovieMind{% endblock %}
+
+{% block page_css %}
+<style>
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.analytics-card {
+    background: var(--surface);
+    border: 1px solid var(--ghost-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.analytics-card:hover {
+    border-color: var(--text-secondary);
+    transform: translateY(-2px);
+}
+
+.analytics-card h3 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.metric-detail {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.charts-section {
+    background: var(--surface);
+    border: 1px solid var(--ghost-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.chart-container {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--ghost-border);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.chart-container h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 250px;
+}
+
+.activity-list {
+    background: var(--surface);
+    border: 1px solid var(--ghost-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--ghost-border);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.activity-date {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.searched-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.searched-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+}
+
+.searched-title {
+    color: var(--text-primary);
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.searched-count {
+    color: var(--accent);
+    font-weight: 600;
+    background: rgba(102, 126, 234, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.no-data {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 2rem;
+}
+
+@media (max-width: 768px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-wrapper {
+        height: 200px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>📊 Analytics Dashboard</h1>
+
+<!-- Summary Stats -->
+<div class="analytics-grid">
+    <div class="analytics-card">
+        <h3>🔍 Searches</h3>
+        <div class="metric-value">{{ total_searches }}</div>
+        <div class="metric-label">Total Searches</div>
+        <div class="metric-detail">{{ recent_searches }} in last 30 days</div>
+    </div>
+    
+    <div class="analytics-card">
+        <h3>📋 Watchlist</h3>
+        <div class="metric-value">{{ total_watchlist }}</div>
+        <div class="metric-label">Watchlist Items</div>
+        <div class="metric-detail">{{ recent_watchlist }} added in last 30 days</div>
+    </div>
+    
+    <div class="analytics-card">
+        <h3>👁️ Viewed</h3>
+        <div class="metric-value">{{ total_viewed }}</div>
+        <div class="metric-label">Movies Viewed</div>
+        <div class="metric-detail">{{ recent_viewed }} in last 30 days</div>
+    </div>
+    
+    <div class="analytics-card">
+        <h3>⭐ Rating</h3>
+        <div class="metric-value">{{ avg_rating }}/10</div>
+        <div class="metric-label">Average Rating</div>
+        <div class="metric-detail">{{ total_movies_analyzed }} movies analyzed</div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<section class="charts-section">
+    <h2>📈 Activity Insights</h2>
+    <div class="charts-grid">
+        <!-- Daily Activity Chart -->
+        <div class="chart-container">
+            <h4>Daily Activity (Last 7 Days)</h4>
+            <div class="chart-wrapper">
+                <canvas id="dailyActivityChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Top Genres Chart -->
+        <div class="chart-container">
+            <h4>Your Top Genres</h4>
+            <div class="chart-wrapper">
+                <canvas id="genresChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Most Searched Movies -->
+<section class="details-box">
+    <h2>🔥 Most Searched Movies</h2>
+    <div class="searched-list">
+        {% if most_searched %}
+            {% for movie, count in most_searched %}
+            <div class="searched-item">
+                <span class="searched-title">{{ movie }}</span>
+                <span class="searched-count">{{ count }}x</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-data">No search data available yet</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Recent Activity -->
+<section class="activity-list">
+    <h2>⏰ Recent Activity</h2>
+    {% if activities %}
+        {% for activity in activities %}
+        <div class="activity-item">
+            <span class="activity-icon">{{ activity.icon }}</span>
+            <div class="activity-content">
+                <div class="activity-title">{{ activity.title }}</div>
+                <div class="activity-date">{{ activity.date|date:"M d, Y H:i" }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-data">No recent activity</p>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block page_js %}
+{{ daily_activity|json_script:"dailyActivityData" }}
+{{ top_genres|json_script:"genresData" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Daily Activity Chart
+    const dailyCtx = document.getElementById('dailyActivityChart');
+    if (dailyCtx) {
+        const dailyData = JSON.parse(document.getElementById('dailyActivityData').textContent);
+        
+        new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: dailyData.map(item => item.day),
+                datasets: [{
+                    label: 'Daily Activity',
+                    data: dailyData.map(item => item.total),
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 12
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Top Genres Chart
+    const genresCtx = document.getElementById('genresChart');
+    if (genresCtx) {
+        try {
+            const genresData = JSON.parse(document.getElementById('genresData').textContent);
+            
+            // Ensure we have valid data
+            if (genresData && genresData.length > 0) {
+                new Chart(genresCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: genresData.map(item => item[0]),
+                        datasets: [{
+                            data: genresData.map(item => item[1]),
+                            backgroundColor: [
+                                '#667eea',
+                                '#764ba2',
+                                '#f093fb',
+                                '#f5576c',
+                                '#4facfe'
+                            ],
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: {
+                                        size: 11
+                                    },
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                padding: 12
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading genres chart:', error);
+        }
+    }
+});
+</script>
+{% endblock %}
