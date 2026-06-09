@@ -67,6 +67,7 @@ def _get_recent_items(user):
         .order_by("-last_viewed_at")[:10]
     )
 
+
 def _parse_release_year(value) -> Optional[int]:
     """Parse a release year from date-like values."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
