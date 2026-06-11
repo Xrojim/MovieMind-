@@ -58,7 +58,6 @@ def _update_recently_viewed(user, movie_id: int, movie_title: str):
     if len(recent_ids) > 10:
         RecentlyViewed.objects.filter(id__in=recent_ids[10:]).delete()
 
-
 def _get_recent_items(user):
     if not user.is_authenticated:
         return []
@@ -66,7 +65,6 @@ def _get_recent_items(user):
         RecentlyViewed.objects.filter(user=user)
         .order_by("-last_viewed_at")[:10]
     )
-
 
 def _parse_release_year(value) -> Optional[int]:
     """Parse a release year from date-like values."""
