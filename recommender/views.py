@@ -36,6 +36,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
+
 # Global cache for recommender system
 _RECOMMENDER = None
 _MODEL_LOADING = False
