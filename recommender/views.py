@@ -836,7 +836,6 @@ def _build_movie_card_from_metadata(metadata, movie_id: int, fallback_title: str
         ),
     }
 
-
 @require_http_methods(["GET"])
 def search_movies(request):
     """API endpoint for searching movies (autocomplete)"""
@@ -861,7 +860,6 @@ def search_movies(request):
     except Exception as e:
         logger.error(f"Error in search: {e}")
         return JsonResponse({'error': 'Search failed'}, status=500)
-
 
 @require_http_methods(["GET"])
 def model_status(request):
