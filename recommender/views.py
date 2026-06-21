@@ -895,7 +895,6 @@ def model_status(request):
             'status': 'initializing'
         })
 
-
 @require_http_methods(["GET", "POST"])
 def signup_view(request):
     """Basic user signup."""

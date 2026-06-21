@@ -63,3 +63,4 @@ htmlcov/
 *.npy
 *.parquet
 *.npz
+!logs/.gitkeep
