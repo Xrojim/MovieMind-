@@ -230,6 +230,7 @@ LOGOUT_REDIRECT_URL = "/"
 # Create models directory if it doesn't exist
 Path(MODEL_DIR).mkdir(parents=True, exist_ok=True)
 
+
 # TMDB API Configuration
 TMDB_API_KEY = os.environ.get('TMDB_API_KEY', '1a6300162ffb3f6baa6ad3a2bd77479c')
 TMDB_API_BASE_URL = 'https://api.themoviedb.org/3'
